@@ -1,16 +1,24 @@
-pub type Source = ();
+use crate::error::RoxError;
+use std;
 
-pub fn read_source(filename: &str) -> Source {
-    println!("Reading {filename}...");
+#[derive(Debug)]
+pub struct Source {
+    pub raw: String,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub fn read_source(filename: &str) -> Result<Source, RoxError> {
+    let raw = std::fs::read_to_string(filename)?;
 
-    #[test]
-    fn test_read_source() {
-        let result = read_source("hello.txt");
-        assert_eq!(result, ());
-    }
+    Ok(Source { raw })
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+
+//     #[test]
+//     fn test_read_source() {
+//         let result = read_source("hello.txt");
+//         assert_eq!(result, ());
+//     }
+// }
