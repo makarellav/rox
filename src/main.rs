@@ -23,7 +23,7 @@ fn main() {
 
     println!("{}", &source.raw);
 
-    tokenize();
+    tokenize(&source);
     parse();
     evaluate();
 }
