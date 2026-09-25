@@ -1,4 +1,4 @@
-use std::default;
+use std::{default, iter::Peekable, str::Chars};
 
 use crate::{error::RoxError, reader::Source};
 
@@ -64,6 +64,22 @@ impl Token {
     }
 }
 
+fn get_single_char_token(ch: char) -> Option<TokenType> {
+    match ch {
+        '(' => Some(TokenType::LParen),
+        ')' => Some(TokenType::RParen),
+        '{' => Some(TokenType::LCurly),
+        '}' => Some(TokenType::RCurly),
+        ',' => Some(TokenType::Comma),
+        '.' => Some(TokenType::Dot),
+        '-' => Some(TokenType::Minus),
+        '+' => Some(TokenType::Plus),
+        ';' => Some(TokenType::Semicolon),
+        '*' => Some(TokenType::Star),
+        _ => None,
+    }
+}
+
 pub fn tokenize(source: &Source) -> Tokens {
     let mut it = source.raw.chars().peekable();
 
@@ -72,41 +88,56 @@ pub fn tokenize(source: &Source) -> Tokens {
         errors: vec![],
     };
 
-    let mut _line = 1;
+    let mut line = 1;
 
     while let Some(ch) = it.next() {
-        match ch {
-            '(' => tokens
+        if let Some(token_type) = get_single_char_token(ch) {
+            tokens
                 .data
-                .push(Token::new(TokenType::LParen, ch.to_string(), 0)),
-            ')' => tokens
-                .data
-                .push(Token::new(TokenType::RParen, ch.to_string(), 0)),
-            '{' => tokens
-                .data
-                .push(Token::new(TokenType::LCurly, ch.to_string(), 0)),
-            '}' => tokens
-                .data
-                .push(Token::new(TokenType::RCurly, ch.to_string(), 0)),
-            ',' => tokens
-                .data
-                .push(Token::new(TokenType::Comma, ch.to_string(), 0)),
-            '.' => tokens
-                .data
-                .push(Token::new(TokenType::Dot, ch.to_string(), 0)),
+                .push(Token::new(token_type, ch.to_string(), line));
 
-            '-' => tokens
-                .data
-                .push(Token::new(TokenType::Minus, ch.to_string(), 0)),
-            '+' => tokens
-                .data
-                .push(Token::new(TokenType::Plus, ch.to_string(), 0)),
-            ';' => tokens
-                .data
-                .push(Token::new(TokenType::Semicolon, ch.to_string(), 0)),
-            '*' => tokens
-                .data
-                .push(Token::new(TokenType::Star, ch.to_string(), 0)),
+            continue;
+        }
+
+        match ch {
+            '!' | '=' | '>' | '<' => {
+                let (single_type, double_type, double_lexeme) = match ch {
+                    '!' => (TokenType::Bang, TokenType::NotEqual, "!="),
+                    '=' => (TokenType::Equal, TokenType::EqualEqual, "=="),
+                    '>' => (TokenType::Greater, TokenType::GreaterEqual, ">="),
+                    '<' => (TokenType::Less, TokenType::LessEqual, "<="),
+                    _ => unreachable!(),
+                };
+
+                if it.peek() == Some(&'=') {
+                    tokens
+                        .data
+                        .push(Token::new(double_type, double_lexeme.to_string(), line));
+                } else {
+                    tokens
+                        .data
+                        .push(Token::new(single_type, ch.to_string(), line));
+                }
+            }
+            '/' => {
+                if it.peek() == Some(&'/') {
+                    it.next();
+
+                    while let Some(&next_ch) = it.peek() {
+                        if next_ch == '\n' {
+                            break;
+                        }
+
+                        it.next();
+                    }
+                } else {
+                    tokens
+                        .data
+                        .push(Token::new(TokenType::Slash, ch.to_string(), line));
+                }
+            }
+            ' ' | '\t' | '\r' => {}
+            '\n' => line += 1,
             _ => {}
         }
     }
