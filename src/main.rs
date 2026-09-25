@@ -23,7 +23,10 @@ fn main() {
 
     println!("{}", &source.raw);
 
-    tokenize(&source);
+    let tokens = tokenize(&source);
+
+    dbg!(tokens.data);
+
     parse();
     evaluate();
 }

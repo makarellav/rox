@@ -2,6 +2,7 @@ use std::{default, iter::Peekable, str::Chars};
 
 use crate::{error::RoxError, reader::Source};
 
+#[derive(Debug)]
 pub enum TokenType {
     LParen,
     RParen,
@@ -43,14 +44,15 @@ pub enum TokenType {
     While,
 }
 
-struct Token {
+#[derive(Debug)]
+pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
     pub line: usize,
 }
 
 pub struct Tokens {
-    data: Vec<Token>,
+    pub data: Vec<Token>,
     errors: Vec<RoxError>,
 }
 
@@ -110,6 +112,8 @@ pub fn tokenize(source: &Source) -> Tokens {
                 };
 
                 if it.peek() == Some(&'=') {
+                    it.next();
+
                     tokens
                         .data
                         .push(Token::new(double_type, double_lexeme.to_string(), line));
